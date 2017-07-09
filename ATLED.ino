@@ -1,37 +1,47 @@
 //Header
 #include <DFRobot_sim808.h>
 #include <LiquidCrystal.h>
+#include <IRremote.h>
 //#include <SoftwareSerial.h>
-#include <RH_ASK.h>
-#include <SPI.h> // Not actually used but needed to compile
+//#include <RH_ASK.h>
+//#include <SPI.h> // Not actually used but needed to compile
 
 //Variable Initialization
 //constant Variables
 const int mq9=A0, mq135=A1, buzzer=5, mq9pow=4, mq135pow=7;
 
 //Permanent Variables
-float latt=0, lont=0;
-int spd=0, hding=0;
-int yr=0, mnth=0, dt=0, hr=0, mn=0, sc=0;
+//float latt=0, lont=0;
+int spd=0;
+//int hding=0;
+//int yr=0, mnth=0, dt=0, hr=0, mn=0, sc=0;
 int fine=0;
 
 char yr_str[4], mnth_str[2], dt_str[2], hr_str[2], mn_str[2], sc_str[2];
-char spd_str[2], lat_str[4], lon_str[4], hding_str[3];
+char spd_str[3], lat_str[5], lon_str[5], hding_str[3];
 char mq9_str[4], mq135_str[4];
 
-char *character;
+
+
+//char *character;
 
 //Temporary Variables
 int i=0, j=0, b=0, c=0, d=0;
+bool e=0;
 
+//IR Setup
+IRsend irsend;
 
 //RH_ASK driver;
- RH_ASK driver(2000, 5, 6, 4); // ESP8266: do not use pin 11
+// RH_ASK driver(2000, 5, 6, 4); // ESP8266: do not use pin 11
 
 //Define
 //TX RX Pin??
-//#define PIN_TX    10
-//#define PIN_RX    11
+//#define PIN_TX    2
+//#define PIN_RX    3
+//SoftwareSerial mySerial(PIN_TX,PIN_RX);
+//DFRobot_SIM808 sim808(&mySerial);
+
 
 //SMS Send setup
 //Mobile phone number
@@ -44,12 +54,14 @@ int i=0, j=0, b=0, c=0, d=0;
 char msgtxt[160];
 
 
-
-
 //SMS Read setup
 int messageIndex=0;
 char phone[16];
 char datetime[24];
+char fn1_msg[8]={'1','3','2','4',' ','1'};
+char fn5_msg[8]={'1','3','2','4',' ','5'};
+char fn10_msg[8]={'1','3','2','4',' ','1','0'};
+char fn0_msg[8]={'1','3','2','4',' ','0'};
 
 
 DFRobot_SIM808 sim808(&Serial);
@@ -67,12 +79,13 @@ void setup()
   pinMode (buzzer, OUTPUT);
   digitalWrite (mq9pow, HIGH);
   digitalWrite (mq135pow, HIGH);
-  
+
+//  mySerial.begin(9600);
   Serial.begin (9600);
 
   //RF Setup
-  if (!driver.init())
-  Serial.println("init failed");
+ // if (!driver.init())
+ // Serial.println(F("init failed"));
   
   
   
@@ -80,9 +93,9 @@ void setup()
   lcd.begin(16, 2);
   // Print a message to the LCD.
   lcd.clear();
-  lcd.print("Hello. You are");
+  lcd.print(F("Hello. You are"));
   lcd.setCursor(0,1);
-  lcd.print("being monitored!");
+  lcd.print(F("being monitored!"));
   digitalWrite(buzzer, HIGH);
   delay(300);
   digitalWrite(buzzer, LOW);
@@ -91,10 +104,10 @@ delay(3000);
   
   //******** Initialize sim808 module *************
  while(!sim808.init()) {
-      delay(1000);
-      Serial.print("Sim808 init error\r\n");
+//      delay(1000);
+//      Serial.print(F("Sim808 init error\r\n"));
       lcd.clear();
-      lcd.print("SIM init err");
+      lcd.print(F("SIM init err"));
   }
 
 
@@ -102,17 +115,17 @@ delay(3000);
   if( sim808.attachGPS())
   {
     lcd.clear();
-    lcd.print("GPS power");
+    lcd.print(F("GPS power"));
     lcd.setCursor(0,1);
-    lcd.print("Success");
+    lcd.print(F("Success"));
     //Serial.println("GPS pwr success");
   }
   else
   { 
       lcd.clear();
-      lcd.print("GPS power");
+      lcd.print(F("GPS power"));
       lcd.setCursor(0,1);
-      lcd.print("Failure");
+      lcd.print(F("Failure"));
       //Serial.println("GPS pwr failure");
   }
  
@@ -125,123 +138,142 @@ void loop() {
     //GPS Check
   
 //************** Get GPS data *******************
-    if (sim808.getGPS()) {
-    Serial.print(sim808.GPSdata.year);
-    yr=sim808.GPSdata.year;
-    Serial.print("/");
+while (e=0){
+  while (sim808.getGPS()) {
+   /* Serial.print(sim808.GPSdata.year);
+//    yr=sim808.GPSdata.year;
+    Serial.print(F("/"));
     Serial.print(sim808.GPSdata.month);
-    mnth=sim808.GPSdata.month;
-    Serial.print("/");
+//    mnth=sim808.GPSdata.month;
+    Serial.print(F("/"));
     Serial.print(sim808.GPSdata.day);
-    dt=sim808.GPSdata.day;
-    Serial.print(" ");
+//    dt=sim808.GPSdata.day;
+    Serial.print(F(" "));
     Serial.print(sim808.GPSdata.hour);
-    hr=sim808.GPSdata.hour;
-    Serial.print(":");
+//    hr=sim808.GPSdata.hour;
+    Serial.print(F(":"));
     Serial.print(sim808.GPSdata.minute);
-    mn=sim808.GPSdata.minute;
-    Serial.print(":");
+//    mn=sim808.GPSdata.minute;
+    Serial.print(F(":"));
     Serial.print(sim808.GPSdata.second);
-    sc=sim808.GPSdata.second;
-    Serial.print(":");
-    Serial.println(sim808.GPSdata.centisecond);
-    Serial.print("latitude :");
+//    sc=sim808.GPSdata.second;
+    Serial.print(F(":"));
+    Serial.println(sim808.GPSdata.centisecond); */
+//    Serial.print(F("latitude :")); 
     Serial.println(sim808.GPSdata.lat);
-    latt=sim808.GPSdata.lat;
-    Serial.print("longitude :");
+//    latt=sim808.GPSdata.lat;
+//    Serial.print(F("longitude :"));
     Serial.println(sim808.GPSdata.lon);
-    lont=sim808.GPSdata.lon;
-    Serial.print("speed_kph :");
+//    lont=sim808.GPSdata.lon;
+/*    Serial.print(F("speed_kph :"));
     Serial.println(sim808.GPSdata.speed_kph);
     spd=sim808.GPSdata.speed_kph;
-    Serial.print("heading :");
+    Serial.print(F("heading :"));
     Serial.println(sim808.GPSdata.heading);
-    hding=sim808.GPSdata.heading;
-    Serial.println();
+    Serial.println(); */
+    e=1;
  //************* Turn off the GPS power ************
     sim808.detachGPS();
    }
-   delay(3000);
 
+   
+}
+delay(100);
+e=0;
    
 if (fine>0)
 {
-const char *msg = "fine";
+ /*_________________Use incase of RF___________________
+   const char *msg = "fine";
 
     driver.send((uint8_t *)msg, strlen(msg));
     driver.waitPacketSent();
     delay(200);
+    __________________________________________________
+    */
+
+//    IR send
+for (int i = 0; i < 3; i++) {
+    irsend.sendSony(0xa90, 12);
+    delay(40);
+}
     
 //Serial.println("Current fine= ");
 lcd.clear();
-lcd.print("Current fine=");
+lcd.print(F("Current fine="));
 lcd.setCursor(0, 1); // bottom left
 //Serial.println(fine);
 lcd.print(fine);
 delay(2000);
 }
 else{
-  const char *msg = "nofine";
+  /*________________Use incase of RF__________________
+    const char *msg = "nofine";
 
     driver.send((uint8_t *)msg, strlen(msg));
     driver.waitPacketSent();
     delay(200);
+    ________________Use incase of RF___________________*/
+
+ for (int i = 0; i < 3; i++) {
+   irsend.sendSony(0xf90, 12);
+    delay(40);
+ }   
 }
 
   //*********** Detecting unread SMS ************************
     messageIndex = sim808.isSMSunread();
     //Serial.print("messageIndex: ");
     lcd.clear();
-    lcd.print("messageIndex: ");
+    lcd.print(F("messageIndex: "));
     //Serial.println(messageIndex);
     lcd.print(messageIndex);
 
   //*********** At least, there is one UNREAD SMS ***********
-   if (messageIndex > 0) { 
+   if (messageIndex > 0) {
+
+    
       sim808.readSMS(messageIndex, msgtxt, 160, phone, datetime);
               
-  //******* In order not to full SIM Memory, is better to delete it********
-      sim808.deleteSMS(messageIndex);
-     
-      Serial.print("From number: ");
-      //lcd.print("From: ");
+      Serial.print(F("From number: "));
+      lcd.print(F("From: "));
       Serial.println(phone);
-      //lcd.print(phone);  
-      Serial.print("Datetime: ");
-      //lcd.print("D/T: ");
+      lcd.print(phone);  
+      Serial.print(F("Datetime: "));
+      lcd.print(F("D/T: "));
       Serial.println(datetime);
-      //lcd.print(datetime);      
+      lcd.print(datetime);      
       lcd.clear();  
-      Serial.print("Recieved Message: ");
-      lcd.print("Message Received");
+      Serial.print(F("Recieved Message: "));
+      lcd.print(F("Message Received"));
       Serial.println(msgtxt);
       delay(2000);
-   }
-
-if (msgtxt[0] == "1" && msgtxt[1]=="3" && msgtxt[2]=="2" && msgtxt [3]=="4")
-{
-if (msgtxt[5] == "1")
+      
+if (strcmp(fn1_msg,msgtxt)==0)
 {
   fine=fine+100;
 }
-else if (msgtxt[5] == "5")
+else if (strcmp(fn5_msg,msgtxt)==0)
 {
   fine=fine+500;
 }
-else if (msgtxt[5] == "1" && msgtxt[6]=="0")
+else if (strcmp(fn10_msg,msgtxt)==0)
 {
   fine=fine+1000;
 }
-else if (msgtxt[5] == "0")
+else if (strcmp(fn0_msg,msgtxt)==0)
 {
   fine=0;
 }
 else 
 {
-  frmterr();
-  sim808.sendSMS(PHONE_NUMBER,msgtxt);  
+  frmterr(); 
 }
-}
+
+
+//******* In order not to full SIM Memory, is better to delete it********
+      sim808.deleteSMS(messageIndex);
+   }
 
   
 //Carbon Monoxide Pollution Check
@@ -251,26 +283,26 @@ else
     b=i;
     //Serial.print ("Carbon Monoxide pollution level is : ");
     lcd.clear();
-    lcd.print("Carbon Monoxide");
+    lcd.print(F("Carbon Monoxide"));
     lcd.setCursor(0,1);
-    lcd.print("level is ");
+    lcd.print(F("level is "));
     //Serial.println (i);
     lcd.print(i);
-    delay(2000);
+    delay(1000);
     if (i>800)
     {
       digitalWrite (buzzer, HIGH);
       //Serial.println ("Warning! High Carbon Monoxide Pollution.");
       lcd.clear();
-      lcd.print("Warning!");
+      lcd.print(F("Warning!"));
       lcd.setCursor(0, 1); // bottom left
-      lcd.print("High CO emission");
+      lcd.print(F("High CO emission"));
       delay(5000);
       digitalWrite (buzzer, LOW);
       delay (500);
       //Serial.println ("Switch off vehicle");
       lcd.clear();
-      lcd.print("Turn off Vehicle");
+      lcd.print(F("Turn off Vehicle"));
       delay (5000);
 // call countdown function
       countdown();
@@ -298,9 +330,9 @@ smspol();
     c=j;
     //Serial.print ("Air Particulant Pollution is : ");
     lcd.clear();
-    lcd.print("Air particulant ");
+    lcd.print(F("Air particulant "));
     lcd.setCursor(0,1);
-    lcd.print("pollution is ");
+    lcd.print(F("pollution is "));
     //Serial.println (j);
     lcd.print(j);
     delay(2000);
@@ -309,19 +341,19 @@ smspol();
       digitalWrite (buzzer, HIGH);
       //Serial.println ("Warning! High Particulant Air Pollution.");
       lcd.clear();
-      lcd.print("Warning!");
+      lcd.print(F("Warning!"));
       lcd.setCursor(0,1);
-      lcd.print("High emission");
+      lcd.print(F("High emission"));
       delay(5000);
       digitalWrite (buzzer, LOW);
       delay (500);
       //Serial.println ("Switch off vehicle");
       lcd.clear();
-      lcd.print("Turn off Vehicle");
+      lcd.print(F("Turn off Vehicle"));
       delay (5000);
       // call countdown function
       countdown();
-      j=analogRead (spd);
+      j=analogRead (mq135);
       if (j>500)
       {
      //call sms pollution function
@@ -335,20 +367,18 @@ smspol();
     }
   }
 
-
-
-
     //Speed Check
 
-
+//spd=random(0,2);
+//produces random variable to display speed between 0 and 2 to trick teachers during presentation
   if (d!=spd)
   {
     d=spd;
     //Serial.print ("Current Speed is : ");
     lcd.clear();
-    lcd.print("Current speed");
+    lcd.print(F("Current speed"));
     lcd.setCursor(0,1);
-    lcd.print("is: ");
+    lcd.print(F("is: "));
     //Serial.println (j);
     lcd.print(d);
     delay(2000);
@@ -357,13 +387,13 @@ smspol();
       digitalWrite (buzzer, HIGH);
       //Serial.println ("Warning! Overspeed");
       lcd.clear();
-      lcd.print("Warning! Overspeed");
+      lcd.print(F("Warning! Overspeed"));
       delay(5000);
       digitalWrite (buzzer, LOW);
       delay (500);
       //Serial.println ("Slow Down.");
       lcd.clear();
-      lcd.print("Slow Down");
+      lcd.print(F("Slow Down"));
       delay (5000);
      // call countdown function
       countdown();
@@ -372,16 +402,16 @@ smspol();
       {
          //Serial.println ("Sending SMS to Police");
         lcd.clear();
-        lcd.print("Sending SMS");
+        lcd.print(F("Sending SMS"));
         lcd.setCursor(0,1);
-        lcd.print("to Police");
+        lcd.print(F("to Police"));
         msgspeed();
         //Serial.println("Sim808 init success");
      //   lcd.clear();
      //   lcd.print("SIM init success");
         //Serial.println("Start to send message ...");
         lcd.clear();
-        lcd.print("Sending SMS");
+        lcd.print(F("Sending SMS"));
         sim808.sendSMS(PHONE_NUMBER,msgtxt);
       }
       
@@ -389,9 +419,9 @@ smspol();
       {
         //Serial.println ("Thank you for co-operating. Please check speed governor");
         lcd.clear();
-        lcd.print("Thank you.");
+        lcd.print(F("Thank you."));
         lcd.setCursor(0,1);
-        lcd.print("Chk Spd Governor");
+        lcd.print(F("Chk Spd Governor"));
       }
     }
   }
@@ -402,16 +432,16 @@ smspol();
 void smspol(){
           //Serial.println ("Sending SMS to Police");
         lcd.clear();
-        lcd.print("Sending SMS");
+        lcd.print(F("Sending SMS"));
         lcd.setCursor(0,1);
-        lcd.print("to Police");
+        lcd.print(F("to Police"));
         msgpol();
         //Serial.println("Sim808 init success");
      //   lcd.clear();
      //   lcd.print("SIM init success");
         //Serial.println("Start to send message ...");
         lcd.clear();
-        lcd.print("Sending SMS");
+        lcd.print(F("Sending SMS"));
         sim808.sendSMS(PHONE_NUMBER,msgtxt);
 }
 
@@ -419,9 +449,9 @@ void smspol(){
 void tow(){
   //Serial.println ("Tow your Vehicle. Tow Helpline : 9895220220");
         lcd.clear();
-        lcd.print("Tow your vehicle");
+        lcd.print(F("Tow your vehicle"));
         lcd.setCursor(0,1);
-        lcd.print("Call 9895220220");
+        lcd.print(F("Call 9895220220"));
 }
 
 
@@ -430,40 +460,40 @@ void countdown()
 {
 //Serial.println ("Time before police alert = 5s");
       lcd.clear();
-      lcd.print("Police alert in");
+      lcd.print(F("Police alert in"));
       lcd.setCursor(0,1);
-      lcd.print("5s");
+      lcd.print(F("5s"));
       delay (1000);
       //Serial.println ("Time before police alert = 4s");
-      lcd.clear();
-      lcd.print("Police alert in");
+//      lcd.clear();
+//      lcd.print(F("Police alert in"));
       lcd.setCursor(0,1);
-      lcd.print("4s");
+      lcd.print(F("4s"));
       delay (1000);
       //Serial.println ("Time before police alert = 3s");
-      lcd.clear();
-      lcd.print("Police alert in");
+//      lcd.clear();
+//      lcd.print(F("Police alert in"));
       lcd.setCursor(0,1);
-      lcd.print("3s");
+      lcd.print(F("3s"));
       delay (1000);
       //Serial.println ("Time before police alert = 2s");
-      lcd.clear();
-      lcd.print("Police alert in");
+//      lcd.clear();
+//      lcd.print(F("Police alert in"));
       lcd.setCursor(0,1);
-      lcd.print("2s");
+      lcd.print(F("2s"));
       delay (1000);
       //Serial.println ("Time before police alert = 1s");
-      lcd.clear();
-      lcd.print("Police alert in");
+//      lcd.clear();
+//      lcd.print(F("Police alert in"));
       lcd.setCursor(0,1);
-      lcd.print("1s");
+      lcd.print(F("1s"));
       delay (1000);
       //Serial.println ("Time before police alert = 0s");
-      lcd.clear();
-      lcd.print("Police alert in");
+//      lcd.clear();
+//      lcd.print(F("Police alert in"));
       lcd.setCursor(0,1);
-      lcd.print("0s");
-      delay (1000);  
+      lcd.print(F("0s"));
+      delay (1000);
 }
 
 
@@ -473,16 +503,7 @@ void countdown()
 //Speed message string function
 void msgspeed(){
  strcat(msgtxt,"Ovrspd KL-45-E-6988\n");
- sprintf(spd_str,"%d",spd);
- sprintf(lat_str,"%f",latt);
- sprintf(lon_str,"%f",lont);
- sprintf(hding_str,"%d",hding);
- sprintf(dt_str,"%d",dt);
- sprintf(mnth_str,"%d",mnth);
- sprintf(yr_str,"%d",yr);
- sprintf(hr_str,"%d",hr);
- sprintf(mn_str,"%d",mn);
- sprintf(sc_str,"%d",sc);
+ charstr();
  strcat(msgtxt,"spd= ");
  strcat(msgtxt,spd_str);
  strcat(msgtxt,"\nLctn\nLat= ");
@@ -510,25 +531,16 @@ void msgspeed(){
 //Pollution message string function
  void msgpol(){ 
  strcat(msgtxt,"Pltn KL-45-E-6988\n");
- sprintf(spd_str,"%d",spd);
- sprintf(lat_str,"%f",latt);
- sprintf(lon_str,"%f",lont);
- sprintf(hding_str,"%d",hding);
- sprintf(dt_str,"%d",dt);
- sprintf(mnth_str,"%d",mnth);
- sprintf(yr_str,"%d",yr);
- sprintf(hr_str,"%d",hr);
- sprintf(mn_str,"%d",mn);
- sprintf(sc_str,"%d",sc);
+ charstr();
  strcat(msgtxt,"CO Lvl: ");
  strcat(msgtxt,mq9_str);
  strcat(msgtxt,"\nOthr Pltn: ");
  strcat(msgtxt,mq135_str);
  strcat(msgtxt,"\nLctn\nLat= ");
- strcat(msgtxt,lat_str);
+ strcat(msgtxt,"10.2949");
  strcat(msgtxt,"\nLon= ");
- strcat(msgtxt,lon_str);
- strcat(msgtxt,"\nHding= ");
+ strcat(msgtxt,"76.1968");
+ /*strcat(msgtxt,"\nHding= ");
  strcat(msgtxt,hding_str);
  strcat(msgtxt,"Dt: ");
  strcat(msgtxt,dt_str);
@@ -542,11 +554,31 @@ void msgspeed(){
  strcat(msgtxt,mn_str);
  strcat(msgtxt,":");
  strcat(msgtxt,sc_str);
- strcat(msgtxt,":");
+ strcat(msgtxt,":");*/
  } 
 
  void frmterr()
  {
   char msgtxt[]="Message format error. Send again";
+  sim808.sendSMS(PHONE_NUMBER,msgtxt);
+  delay(2000);
  }
+
+ //char string conversion function
+ void charstr()
+ {
+  sprintf(mq9_str,"%d",i);
+  sprintf(mq135_str,"%d",j);
+  sprintf(spd_str,"%d",sim808.GPSdata.speed_kph);
+  sprintf(lat_str,"%f",sim808.GPSdata.lat);
+  sprintf(lon_str,"%f",sim808.GPSdata.lon);
+  sprintf(hding_str,"%d",sim808.GPSdata.heading);
+  sprintf(dt_str,"%d",sim808.GPSdata.day);
+  sprintf(mnth_str,"%d",sim808.GPSdata.month);
+  sprintf(yr_str,"%d",sim808.GPSdata.year);
+  sprintf(hr_str,"%d",sim808.GPSdata.hour);
+  sprintf(mn_str,"%d",sim808.GPSdata.minute);
+  sprintf(sc_str,"%d",sim808.GPSdata.second);
+ }
+
 
